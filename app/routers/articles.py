@@ -6,6 +6,7 @@ from app.db import videos_collection
 from app.models import TextResponse, Video
 from app.services import storage_service
 from app.services.anthropic_service import generate_article
+from app.services.transcript_service import segments_to_text
 
 router = APIRouter(tags=["articles"])
 
@@ -23,7 +24,8 @@ async def generate_video_article(video_id: str) -> Video:
     if doc["transcript_status"] != "fetched" or not doc.get("transcript_s3_key"):
         raise HTTPException(status_code=400, detail="Transcript not fetched yet")
 
-    transcript_text = storage_service.get_text(doc["transcript_s3_key"])
+    segments = storage_service.get_json(doc["transcript_s3_key"])
+    transcript_text = segments_to_text(segments)
     article_text = generate_article(doc["title"], transcript_text)
 
     key = storage_service.article_key(video_id)

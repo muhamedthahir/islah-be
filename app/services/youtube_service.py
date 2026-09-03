@@ -1,8 +1,14 @@
+import re
 from datetime import datetime, timezone
 
 from googleapiclient.discovery import build
 
 from app.config import settings
+
+_DURATION_RE = re.compile(
+    r"PT(?:(?P<hours>\d+)H)?(?:(?P<minutes>\d+)M)?(?:(?P<seconds>\d+)S)?"
+)
+_SHORT_MAX_SECONDS = 60
 
 
 class ChannelNotFoundError(Exception):
@@ -11,6 +17,44 @@ class ChannelNotFoundError(Exception):
 
 def _client():
     return build("youtube", "v3", developerKey=settings.youtube_api_key)
+
+
+def _duration_to_seconds(duration: str) -> int:
+    match = _DURATION_RE.fullmatch(duration)
+    if not match:
+        return 0
+    hours = int(match.group("hours") or 0)
+    minutes = int(match.group("minutes") or 0)
+    seconds = int(match.group("seconds") or 0)
+    return hours * 3600 + minutes * 60 + seconds
+
+
+def _classify_video_type(snippet: dict, content_details: dict) -> str:
+    if snippet.get("liveBroadcastContent") in ("live", "upcoming"):
+        return "live"
+    duration_seconds = _duration_to_seconds(content_details.get("duration", ""))
+    if duration_seconds and duration_seconds <= _SHORT_MAX_SECONDS:
+        return "short"
+    return "video"
+
+
+def fetch_video_types(video_ids: list[str]) -> dict[str, str]:
+    youtube = _client()
+    video_types: dict[str, str] = {}
+
+    for i in range(0, len(video_ids), 50):
+        chunk = video_ids[i : i + 50]
+        response = (
+            youtube.videos()
+            .list(id=",".join(chunk), part="snippet,contentDetails")
+            .execute()
+        )
+        for item in response.get("items", []):
+            video_types[item["id"]] = _classify_video_type(
+                item.get("snippet", {}), item.get("contentDetails", {})
+            )
+
+    return video_types
 
 
 def fetch_channel(channel_id: str) -> dict:
@@ -81,5 +125,9 @@ def fetch_videos_in_range(
         page_token = response.get("nextPageToken")
         if not page_token or stop_paging:
             break
+
+    video_types = fetch_video_types([video["video_id"] for video in videos])
+    for video in videos:
+        video["video_type"] = video_types.get(video["video_id"], "video")
 
     return videos
