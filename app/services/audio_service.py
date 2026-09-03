@@ -4,6 +4,8 @@ import tempfile
 
 import yt_dlp
 
+from app.config import settings
+
 
 class AudioDownloadError(Exception):
     pass
@@ -18,7 +20,10 @@ def download_audio(video_id: str) -> str:
         "noplaylist": True,
         "quiet": True,
         "no_warnings": True,
+        "extractor_args": {"youtube": {"player_client": ["android", "ios", "web"]}},
     }
+    if settings.youtube_cookies_file:
+        ydl_opts["cookiefile"] = settings.youtube_cookies_file
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
