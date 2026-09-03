@@ -14,6 +14,7 @@ class Settings(BaseSettings):
 
     elevenlabs_api_key: str = ""
     youtube_cookies_file: str = ""
+    youtube_cookies_content: str = ""
 
     aws_access_key_id: str = ""
     aws_secret_access_key: str = ""

@@ -1,3 +1,5 @@
+import time
+
 import requests
 
 from app.config import settings
@@ -7,21 +9,36 @@ SCRIBE_ENDPOINT = "https://api.elevenlabs.io/v1/speech-to-text"
 SCRIBE_MODEL_ID = "scribe_v2"
 SEGMENT_GAP_SECONDS = 0.75
 REQUEST_TIMEOUT_SECONDS = 1800
+MAX_ATTEMPTS = 3
+RETRY_BACKOFF_SECONDS = 5
 
 
 class TranscriptionError(Exception):
     pass
 
 
+def _post_with_retries(file_path: str) -> requests.Response:
+    last_error: Exception | None = None
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            with open(file_path, "rb") as audio_file:
+                return requests.post(
+                    SCRIBE_ENDPOINT,
+                    headers={"xi-api-key": settings.elevenlabs_api_key},
+                    data={"model_id": SCRIBE_MODEL_ID},
+                    files={"file": audio_file},
+                    timeout=REQUEST_TIMEOUT_SECONDS,
+                )
+        except requests.exceptions.ConnectionError as exc:
+            last_error = exc
+            if attempt < MAX_ATTEMPTS:
+                time.sleep(RETRY_BACKOFF_SECONDS * attempt)
+
+    raise TranscriptionError(f"ElevenLabs STT connection failed after {MAX_ATTEMPTS} attempts") from last_error
+
+
 def transcribe_audio(file_path: str) -> tuple[list[TranscriptSegment], list[str]]:
-    with open(file_path, "rb") as audio_file:
-        response = requests.post(
-            SCRIBE_ENDPOINT,
-            headers={"xi-api-key": settings.elevenlabs_api_key},
-            data={"model_id": SCRIBE_MODEL_ID},
-            files={"file": audio_file},
-            timeout=REQUEST_TIMEOUT_SECONDS,
-        )
+    response = _post_with_retries(file_path)
 
     if response.status_code != 200:
         raise TranscriptionError(f"ElevenLabs STT failed ({response.status_code}): {response.text}")

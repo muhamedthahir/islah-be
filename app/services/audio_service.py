@@ -11,6 +11,17 @@ class AudioDownloadError(Exception):
     pass
 
 
+def _resolve_cookie_file(tmp_dir: str) -> str | None:
+    if settings.youtube_cookies_file:
+        return settings.youtube_cookies_file
+    if settings.youtube_cookies_content:
+        path = os.path.join(tmp_dir, "cookies.txt")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(settings.youtube_cookies_content)
+        return path
+    return None
+
+
 def download_audio(video_id: str) -> str:
     url = f"https://www.youtube.com/watch?v={video_id}"
     tmp_dir = tempfile.mkdtemp(prefix="islah-audio-")
@@ -20,10 +31,11 @@ def download_audio(video_id: str) -> str:
         "noplaylist": True,
         "quiet": True,
         "no_warnings": True,
-        "extractor_args": {"youtube": {"player_client": ["android", "ios", "web"]}},
+        "js_runtimes": {"node": {}},
     }
-    if settings.youtube_cookies_file:
-        ydl_opts["cookiefile"] = settings.youtube_cookies_file
+    cookie_file = _resolve_cookie_file(tmp_dir)
+    if cookie_file:
+        ydl_opts["cookiefile"] = cookie_file
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
