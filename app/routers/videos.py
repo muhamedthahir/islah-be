@@ -136,6 +136,7 @@ async def regenerate_video_transcript(video_id: str, background_tasks: Backgroun
 
 
 async def _run_transcript_regeneration(video_id: str) -> None:
+    print("Running transcript regeneration")
     try:
         segments, languages = await asyncio.to_thread(regenerate_transcript_segments, video_id)
     except Exception:

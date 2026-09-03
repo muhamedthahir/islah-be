@@ -21,7 +21,9 @@ def _post_with_retries(file_path: str) -> requests.Response:
     last_error: Exception | None = None
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
+            print("Opening file")
             with open(file_path, "rb") as audio_file:
+                print("File Opened")
                 return requests.post(
                     SCRIBE_ENDPOINT,
                     headers={"xi-api-key": settings.elevenlabs_api_key},
@@ -30,6 +32,7 @@ def _post_with_retries(file_path: str) -> requests.Response:
                     timeout=REQUEST_TIMEOUT_SECONDS,
                 )
         except requests.exceptions.ConnectionError as exc:
+            print(exc);
             last_error = exc
             if attempt < MAX_ATTEMPTS:
                 time.sleep(RETRY_BACKOFF_SECONDS * attempt)
@@ -39,7 +42,7 @@ def _post_with_retries(file_path: str) -> requests.Response:
 
 def transcribe_audio(file_path: str) -> tuple[list[TranscriptSegment], list[str]]:
     response = _post_with_retries(file_path)
-
+    print(response)
     if response.status_code != 200:
         raise TranscriptionError(f"ElevenLabs STT failed ({response.status_code}): {response.text}")
 

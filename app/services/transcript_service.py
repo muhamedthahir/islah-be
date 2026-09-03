@@ -10,6 +10,7 @@ class TranscriptUnavailableError(Exception):
 
 def regenerate_transcript_segments(video_id: str) -> tuple[list[dict], list[str]]:
     file_path = audio_service.download_audio(video_id)
+    print(file_path)
     try:
         segments, languages = stt_service.transcribe_audio(file_path)
     finally:
