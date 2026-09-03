@@ -29,13 +29,20 @@ def download_audio(video_id: str) -> str:
         "format": "bestaudio/best",
         "outtmpl": os.path.join(tmp_dir, "%(id)s.%(ext)s"),
         "noplaylist": True,
-        "quiet": True,
-        "no_warnings": True,
+        "quiet": False,
+        "no_warnings": False,
+        "verbose": True,
         "js_runtimes": {"node": {}},
+        "extractor_args": {"youtube": {"player_client": ["android", "tv", "web"]}},
     }
     cookie_file = _resolve_cookie_file(tmp_dir)
     if cookie_file:
+        exists = os.path.isfile(cookie_file)
+        size = os.path.getsize(cookie_file) if exists else -1
+        print(f"[audio_service] cookie_file={cookie_file} exists={exists} size={size}")
         ydl_opts["cookiefile"] = cookie_file
+    else:
+        print("[audio_service] no cookie file resolved")
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
