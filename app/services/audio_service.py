@@ -35,6 +35,8 @@ def download_audio(video_id: str) -> str:
         "js_runtimes": {"node": {}},
         "extractor_args": {"youtube": {"player_client": ["android", "tv", "web"]}},
     }
+    if settings.youtube_proxy_url:
+        ydl_opts["proxy"] = settings.youtube_proxy_url
     cookie_file = _resolve_cookie_file(tmp_dir)
     if cookie_file:
         exists = os.path.isfile(cookie_file)

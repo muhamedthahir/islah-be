@@ -15,11 +15,13 @@ class Settings(BaseSettings):
     elevenlabs_api_key: str = ""
     youtube_cookies_file: str = ""
     youtube_cookies_content: str = ""
+    youtube_proxy_url: str = ""
 
     aws_access_key_id: str = ""
     aws_secret_access_key: str = ""
     aws_region: str = "us-east-1"
     s3_bucket_name: str = ""
+    audio_s3_prefix: str = "nizami-audio"
 
     cors_origins: str = "http://localhost:5173"
 

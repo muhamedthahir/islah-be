@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.db import ensure_indexes
-from app.routers import articles, channels, videos
+from app.routers import articles, audio, channels, videos
 from app.routers.channels import upsert_channel
 from app.services.youtube_service import ChannelNotFoundError
 
@@ -23,6 +23,7 @@ app.add_middleware(
 app.include_router(channels.router)
 app.include_router(videos.router)
 app.include_router(articles.router)
+app.include_router(audio.router)
 
 
 @app.on_event("startup")

@@ -26,6 +26,20 @@ def get_text(key: str) -> str:
     return response["Body"].read().decode("utf-8")
 
 
+def put_bytes(key: str, data: bytes, content_type: str) -> None:
+    _s3.put_object(
+        Bucket=settings.s3_bucket_name,
+        Key=key,
+        Body=data,
+        ContentType=content_type,
+    )
+
+
+def get_bytes(key: str) -> bytes:
+    response = _s3.get_object(Bucket=settings.s3_bucket_name, Key=key)
+    return response["Body"].read()
+
+
 def put_json(key: str, data: list[dict]) -> None:
     _s3.put_object(
         Bucket=settings.s3_bucket_name,
@@ -46,3 +60,11 @@ def transcript_key(video_id: str) -> str:
 
 def article_key(video_id: str) -> str:
     return f"articles/{video_id}.txt"
+
+
+def audio_key(audio_id: str, ext: str) -> str:
+    return f"{settings.audio_s3_prefix}/files/{audio_id}{ext}"
+
+
+def audio_transcript_key(audio_id: str) -> str:
+    return f"{settings.audio_s3_prefix}/transcripts/{audio_id}.json"

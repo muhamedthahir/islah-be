@@ -1,7 +1,11 @@
+import logging
+
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import CouldNotRetrieveTranscript
 
 from app.services import audio_service, stt_service
+
+logger = logging.getLogger(__name__)
 
 
 class TranscriptUnavailableError(Exception):
@@ -26,6 +30,7 @@ def fetch_transcript_segments(video_id: str) -> list[dict]:
         transcript = next((t for t in transcripts if not t.is_generated), transcripts[0])
         data = transcript.fetch()
     except CouldNotRetrieveTranscript as exc:
+        logger.warning("Transcript fetch failed for %s: %s: %s", video_id, type(exc).__name__, exc)
         raise TranscriptUnavailableError(str(exc)) from exc
 
     return [

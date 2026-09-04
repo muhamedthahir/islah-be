@@ -10,3 +10,4 @@ python-dotenv==1.0.1
 pip-system-certs==5.3
 yt-dlp[default]==2026.8.19
 requests==2.32.3
+python-multipart==0.0.9

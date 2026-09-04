@@ -7,6 +7,7 @@ TranscriptStatus = Literal["none", "fetched", "unavailable", "processing"]
 TranscriptSource = Literal["youtube_captions", "elevenlabs_stt"]
 ArticleStatus = Literal["none", "generated"]
 VideoType = Literal["video", "short", "live"]
+AudioSource = Literal["upload", "url"]
 
 
 class Channel(BaseModel):
@@ -32,6 +33,25 @@ class Video(BaseModel):
     article_s3_key: str | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class Audio(BaseModel):
+    audio_id: str
+    title: str
+    source: AudioSource
+    source_url: str | None = None
+    s3_key: str | None = None
+    content_type: str | None = None
+    transcript_status: TranscriptStatus = "none"
+    transcript_s3_key: str | None = None
+    transcript_languages: list[str] = []
+    created_at: datetime
+    updated_at: datetime
+
+
+class AudioUrlRequest(BaseModel):
+    url: str
+    title: str | None = None
 
 
 class SyncRequest(BaseModel):
